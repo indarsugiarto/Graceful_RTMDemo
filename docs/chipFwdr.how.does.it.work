@@ -1,0 +1,5 @@
+It replaces jpeg_enc/dec, and should sit it chip <0,0>.
+It receives data from host, and forward to chip <2,2> using MCP core-to-core.
+Vice versa, it receives data from chip <2,2> using MCPL core-to-core.
+
+Core-2 operates as a dispatcher. When it receives an SDP packet which is not EOF, it uses FR to tell other cores to fetch and process the data.

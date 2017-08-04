@@ -1,0 +1,3 @@
+- separate isr from normal code, compile using ARM
+- implement re-injector
+- implement on-demand, conservative, Q-learning, pid
