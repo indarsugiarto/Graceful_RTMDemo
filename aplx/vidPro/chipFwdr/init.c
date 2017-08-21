@@ -38,7 +38,10 @@ void initIPtag(uint phase, uint hostIP)
         iptag.arg1 = (IPTAG_SET << 16) + SDP_RESULT_IPTAG;
         iptag.arg2 = SDP_RESULT_PORT;
         iptag.arg3 = hostIP;
-        spin1_send_sdp_msg(&iptag, 10);
+        spin1_send_sdp_msg(&iptag, 10); // for sending result data
+        iptag.arg1 = (IPTAG_SET << 16) + SDP_GENERIC_IPTAG;
+        iptag.arg2 = SDP_GENERIC_PORT;
+        spin1_send_sdp_msg(&iptag, 10); // for sending generic info
     }
 }
 
@@ -47,17 +50,21 @@ uint initApp()
     uint ok;
     coreID = sark_core_id();
     if(sv->p2p_addr!=0 || coreID<2) {
-#if(DEBUG_LEVEL>0)
         io_printf(IO_STD, "[ERR] Wrong core/chip!\n");
-#endif
+        ok = FAILURE;
+    }
+    else if(sark_app_id()!=CHIPFWDR_APP_ID) {
+        io_printf(IO_STD, "[ERR] Wrong app-ID!\n");
         ok = FAILURE;
     }
     else {
-        imgBufInitialized = FALSE;
-        imgBufIn = NULL;
-        imgBufOut = NULL;
-
-        selCore = coreID; // will be used by leadAp, initially point to itself
+#if(DEBUG_LEVEL>0)
+        if(coreID==LEAD_CORE)
+            io_printf(IO_STD, "[INFO] chipFwdr is loaded!\n");
+        else
+            io_printf(IO_BUF, "[INFO] chipFwdr is loaded!\n");
+#endif
+        ok = SUCCESS;
     }
 
     return ok;
@@ -67,7 +74,36 @@ uint initApp()
  * */
 uint initRouter()
 {
-    uint ok;
+    uint i,ok,key,mask,route,nEntry;
+
+    mask = MCPL_FWD_PIXEL_MASK;
+
+    // allocate entry for:
+    // - 10 for fwding pixels SOC and DATA
+    // - 1  for fwding EOF
+    nEntry = N_CORE_FOR_FWD*2 + 1;
+
+    uint e = rtr_alloc(nEntry);
+    if(e==0) {
+#if(DEBUG_LEVEL>0)
+        io_printf(IO_STD, "[ERR] initRouter fail\n");
+#endif
+        ok = FAILURE;
+    }
+    else {
+        route = 1 << 1;
+        // set fwding SOC and DATA
+        for(i=0; i<N_CORE_FOR_FWD; i++) {
+            key = MCPL_FWD_PIXEL_SOC | (LEAD_CORE+i);
+            rtr_mc_set(e++,key,mask,route);
+            key = MCPL_FWD_PIXEL_DATA | (LEAD_CORE+i);
+            rtr_mc_set(e++,key,mask,route);
+        }
+        // set fwding EOF
+        key = MCPL_FWD_PIXEL_EOF | coreID;
+        rtr_mc_set(e++, key, mask, route);
+        ok = SUCCESS;
+    }
 
     return ok;
 }
@@ -75,36 +111,8 @@ uint initRouter()
 void initHandlers()
 {
     spin1_callback_on(MCPL_PACKET_RECEIVED, hMCPL, PRIORITY_MCPL);
+    spin1_callback_on(MC_PACKET_RECEIVED, hMC, PRIORITY_MCPL);
     spin1_callback_on(SDP_PACKET_RX, hSDP, PRIORITY_SDP);
     spin1_callback_on(DMA_TRANSFER_DONE, hDMA, PRIORITY_DMA);
     spin1_callback_on(FRPL_PACKET_RECEIVED, hFRPL, PRIORITY_FRPL);
 }
-
-// create_or_del 0 -> create, 1 -> free
-void initImgBuf(uint create_or_del, uint arg2)
-{
-    if(create_or_del==0) {
-        // resize image buffer if necessary
-        if(imgBufInitialized==TRUE){
-            sark_xfree(sv->sdram_heap, imgBufIn, ALLOC_LOCK);
-            sark_xfree(sv->sdram_heap, imgBufOut, ALLOC_LOCK);
-        }
-        imgBufIn = sark_xalloc(sv->sdram_heap, frameInfo.szPixmap, 0, ALLOC_LOCK);
-        imgBufOut = sark_xalloc(sv->sdram_heap, frameInfo.szPixmap, 0, ALLOC_LOCK);
-        if(imgBufIn==NULL || imgBufOut==NULL) {
-            rt_error(RTE_MALLOC);
-#if(DEBUG_LEVEL>0)
-            io_printf(IO_STD, "[ERR] Cannot allocate image buffers!\n");
-#endif
-        }
-        else {
-            imgBufInitialized=TRUE;
-        }
-    }
-    else {
-        sark_xfree(sv->sdram_heap, imgBufIn, ALLOC_LOCK);
-        sark_xfree(sv->sdram_heap, imgBufOut, ALLOC_LOCK);
-        imgBufInitialized=FALSE;
-    }
-}
-
