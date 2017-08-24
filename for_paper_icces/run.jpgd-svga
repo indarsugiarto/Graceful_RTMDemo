@@ -1,0 +1,3 @@
+#!/bin/bash
+./jpgd.py images/Elephant-Wallpapers-svga.jpg
+

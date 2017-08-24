@@ -1,0 +1,1 @@
+./pwrLogger_cli.py -i 10.99.192.101 -p 30001 -m 0 -l pwr_user_200_edge_vga

@@ -1,0 +1,8 @@
+#!/bin/bash
+ybug spin5 << EOF
+sp root
+app_stop 16
+sleep 1
+app_load ../aplx/bin/mSpinJPEGenc.aplx . 2 16
+EOF
+

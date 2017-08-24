@@ -1,0 +1,39 @@
+profiler_user_200_jpge_vga.log: 49.62, 49.81
+profiler_user_200_jpge_svga-Tdeg.log: 49.53, 49.83
+profiler_user_200_jpge_xga-Tdeg.log: 49.71, 49.93
+profiler_ondemand_jpge_vga-Tdeg.log: 48.36, 49.08
+profiler_ondemand_jpge_svga-Tdeg.log: 48.3, 49.25
+profiler_ondemand_jpge_xga-Tdeg.log: 48.34, 49.42
+profiler_consv_jpge_vga-Tdeg.log: 48.11, 48.86
+profiler_consv_jpge_svga-Tdeg.log: 48.21, 49.14
+profiler_consv_jpge_xga-Tdeg.log: 48.17, 49.22
+profiler_pmc_jpge_vga-Tdeg.log: 48.29, 49.00
+profiler_pmc_jpge_svga-Tdeg.log: 48.37, 49.24
+profiler_pmc_jpge_xga-Tdeg.log: 48.32, 49.37
+
+profiler_user_200_jpgd_vga-Tdeg.log: 49.96, 50.32
+profiler_user_200_jpgd_svga-Tdeg.log: 50.01, 50.35
+profiler_user_200_jpgd_xga-Tdeg.log: 50.09, 50.59
+profiler_ondemand_jpgd_vga-Tdeg.log: 48.58, 49.97
+profiler_ondemand_jpgd_svga-Tdeg.log: 48.71, 50.1
+profiler_ondemand_jpgd_xga-Tdeg.log: 48.67, 50.39
+profiler_consv_jpgd_vga-Tdeg.log: 48.53, 49.74
+profiler_consv_jpgd_svga-Tdeg.log: 48.64, 49.98
+profiler_consv_jpgd_xga-Tdeg.log: 48.56, 50.22
+profiler_pmc_jpgd_vga-Tdeg.log: 48.57, 49.87
+profiler_pmc_jpgd_svga-Tdeg.log: 48.67, 50.1
+profiler_pmc_jpgd_xga-Tdeg.log: 48.83, 50.38
+
+profiler_user_200_edge_vga-Tdeg.log: 51.15, 52.22
+profiler_user_200_edge_svga-Tdeg.log: 51.41, 52.81
+profiler_user_200_edge_xga-Tdeg.log: 51.53, 53.47
+profiler_ondemand_edge_vga-Tdeg.log: 50.23, 51.43
+profiler_ondemand_edge_svga-Tdeg.log: 50.18, 51.54
+profiler_ondemand_edge_xga-Tdeg.log: 50.19, 51.73
+profiler_consv_edge_vga-Tdeg.log: 49.93, 51.01
+profiler_consv_edge_svga-Tdeg.log: 50.18, 51.52
+profiler_consv_edge_xga-Tdeg.log: 49.91, 51.43
+profiler_pmc_edge_vga-Tdeg.log: 50.16, 51.31
+profiler_pmc_edge_svga-Tdeg.log: 50.27, 51.54
+profiler_pmc_edge_xga-Tdeg.log: 50.34, 51.75
+

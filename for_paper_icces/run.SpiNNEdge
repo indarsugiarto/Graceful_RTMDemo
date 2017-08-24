@@ -1,0 +1,11 @@
+#!/bin/bash
+ybug spin5 << EOF
+app_stop 16
+sleep 1
+app_load SpiNNEdge.aplx @0,0 2-17 16
+app_load SpiNNEdge.aplx @1,0 2-17 16
+app_load SpiNNEdge.aplx @0,1 2-17 16
+app_load SpiNNEdge.aplx @1,1 2-17 16
+EOF
+
+

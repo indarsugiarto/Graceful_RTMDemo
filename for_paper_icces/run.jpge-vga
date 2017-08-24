@@ -1,0 +1,2 @@
+#!/bin/bash
+./jpge.py images/Elephant-Wallpapers-vga.ras vga
