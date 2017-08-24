@@ -1,9 +1,6 @@
-OBJECT = $(BUILD_DIR)profiler_cpuload_isr.o 
+OBJECTS = $(BUILD_DIR)profiler_cpuload_isr.o
 THUMB := 0
-include $(SPINN_DIRS)/make/app.make
-
-$(OBJECT):
-
+#include $(SPINN_DIRS)/make/app.make
 
 # Common includes for making SpiNNaker binaries
 
@@ -28,10 +25,6 @@ GP := arm-none-eabi
 # If SPINN_DIRS is not defined, this is an error!
 ifndef SPINN_DIRS
     $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker tools folder))
-endif
-
-ifndef APP_OUTPUT_DIR
-    APP_OUTPUT_DIR := ./
 endif
 
 ifndef BUILD_DIR
@@ -127,46 +120,9 @@ ifeq ($(DEBUG),1)
 endif
 
 
-# Primary target is an APLX file - built from the ELF
-#  1) Make an APLX header from the ELF file with "mkaplx" and concatenate
-#     that with the binary to make the APLX file
-#  2) "ls" the APLX file
-$(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.bin $(BUILD_DIR)%.nm
-	$(MKDIR) $(APP_OUTPUT_DIR)
-	$(SPINN_TOOLS_DIR)/mkaplx $(BUILD_DIR)$*.nm | $(CAT) - $(BUILD_DIR)$*.bin > $@
-	$(LS) $@
-
-# Create a list of the objects in the file using nm
-$(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
-	$(NM) $< > $@
-	
-# Create a binary file which is the concatenation of RO and RW sections
-$(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
-ifeq ($(GNU),1)
-	$(OC) -O binary -j RO_DATA -j EX_DATA $< $(BUILD_DIR)RO_DATA.bin
-	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
-	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
-else
-	$(OC) --bin --output $@ $<
-endif
-
-# Build the ELF file
-#  1) Link application object(s), build file and library to make the ELF
-#  2) Create a list file
-$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(BUILD_DIR)%_build.o
-	$(MKDIR) $(BUILD_DIR)
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
-	$(OD) $(BUILD_DIR)$*.txt $@
-	
-# Build sark_build.o
-$(BUILD_DIR)%_build.c:
-	$(SPINN_TOOLS_DIR)/mkbuild $* > $@
-
-$(BUILD_DIR)%.o: %.c
+$(OBJECTS): profiler_cpuload_isr.c
 	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
-	
-$(BUILD_DIR)%.o: %.cpp
-	$(MKDIR) $(BUILD_DIR)
-	$(CXX) $(CFLAGS) $(CXXFLAGS) -o $@ $<
+
+clean:
+	$(RM) $(OBJECTS) $(BUILD_DIR)$(APP).txt $(APP_OUTPUT_DIR)$(APP).aplx $(BUILD_DIR)$(APP).elf

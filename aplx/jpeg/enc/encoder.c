@@ -39,31 +39,47 @@ jpec_enc_t *jpec_enc_new(const uchar *img, ushort w, ushort h, int q)
 
 uchar *jpec_enc_run(jpec_enc_t *e, int *len)
 {
-#if(DEBUG_MODE>2)
-  io_printf(IO_BUF, "[jpec_enc_run] Do jpg header\n");
+#if(DEBUG_MODE>=2)
+  io_printf(IO_STD, "[jpec_enc_run] Do jpg header\n");
 #endif
   jpec_enc_open(e);
+  int cntr = 0;
+
+#ifndef FOR_PAPER_ICCES
   while (jpec_enc_next_block(e)) {
+#else
+  /* for ICCES:
+   * 3556 : Elephant-Wallpapers-vga.ras 640 480
+   * 5542 : Elephant-Wallpapers-svga.ras 800 600
+   * 9097 : Elephant-Wallpapers-xga.ras 1024 768
+   * */
+  while (cntr<numProcBlock) { // for VGA resolution
+#endif
+
 #if(DEBUG_MODE>2)
-  io_printf(IO_BUF, "[jpec_enc_run] Processing dct on block\n");
+    io_printf(IO_STD, "[jpec_enc_run] Processing dct on block\n");
 #endif
 	jpec_enc_block_dct(e);
 #if(DEBUG_MODE>2)
-  io_printf(IO_BUF, "[jpec_enc_run] Processing quantization on block\n");
+    io_printf(IO_STD, "[jpec_enc_run] Processing quantization on block\n");
 #endif
 	jpec_enc_block_quant(e);
 #if(DEBUG_MODE>2)
-  io_printf(IO_BUF, "[jpec_enc_run] Processing zz on block\n");
+    io_printf(IO_STD, "[jpec_enc_run] Processing zz on block\n");
 #endif
 	jpec_enc_block_zz(e);
 #if(DEBUG_MODE>2)
-  io_printf(IO_BUF, "[jpec_enc_run] Processing huffman on block\n");
+    io_printf(IO_STD, "[jpec_enc_run] Processing huffman on block\n");
 #endif
 	e->hskel->encode_block(e->hskel->opq, &e->block, e->buf);
+#if(DEBUG_MODE>0)
+    io_printf(IO_BUF, "cntr=%d\n",cntr);
+#endif
+    cntr++;
   }
   jpec_enc_close(e);
   *len = e->buf->len;
-#if(DEBUG_MODE>2)
+#if(DEBUG_MODE>=2)
   io_printf(IO_STD, "[jpec_enc_run] Output at 0x%x\n", e->buf->stream);
 #endif
   return e->buf->stream;

@@ -12,7 +12,8 @@ void c_main()
 
     //spin1_callback_on (MCPL_PACKET_RECEIVED, count_packets, -1);
 	spin1_callback_on (DMA_TRANSFER_DONE, hDMA, -1);
-	spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, 0);
+    //spin1_callback_on(FRPL_PACKET_RECEIVED, hFR, 0);
+    spin1_callback_on(SDP_PACKET_RX, hSDP, 1);
 
 	// then go in the event-loop
     spin1_start (SYNC_NOWAIT);
@@ -25,16 +26,28 @@ void encode(uint arg0, uint arg1)
 {
 	uint time;
 	START_TIMER ();	// Start measuring
+#if(DEBUG_MODE>0)
+    io_printf(IO_STD, "[mSpinJPEGenc] Start encoding...\n");
+#endif
 	e = jpec_enc_new(sdramImgBuf, wImg, hImg, jpgQ);
 	jpgResult = jpec_enc_run(e, &szjpgResult);
 	time = READ_TIMER ();	// Get elapsed time
-	io_printf(IO_STD, "t = %d-us\n", time);
-	sendJPG((uint)jpgResult, (uint)szjpgResult);
+#ifndef FOR_PAPER_ICCES
+    sendJPG((uint)jpgResult, (uint)szjpgResult);
+#else
+    io_printf(IO_STD, "t = %d-us\n", time);
+    sendResult(time);
+#endif
 	jpec_enc_del(e);
 }
 
 
-
+void sendResult(uint tmeas)
+{
+    sdpResult.arg1 = tmeas;
+    sdpResult.length = sizeof(sdp_hdr_t) + sizeof(cmd_hdr_t);
+    spin1_send_sdp_msg(&sdpResult, 10);
+}
 
 
 
@@ -44,6 +57,7 @@ void encode(uint arg0, uint arg1)
 
 /*------------------------ RASTER MAIN FUNCTION ---------------------------*/
 /*-------------------------------------------------------------------------*/
+#ifndef FOR_PAPER_ICCES
 void sendJPG(uint imgAddr, uint imgSize)
 {
 	uint dmaLen, sdpLen;
@@ -111,8 +125,26 @@ void sendJPG(uint imgAddr, uint imgSize)
 	sdpResult.length = sizeof(sdp_hdr_t);	// empty message == EOF
 	spin1_send_sdp_msg(&sdpResult, 10);
 }
+#endif
 
+/* resizeImgBuf() is called when host-PC trigger an SDP with SDP_CMD_INIT_SIZE
+ *
+ */
+void resizeImgBuf(uint szFile, uint portSrc)
+{
+    if(sdramImgBuf!=NULL) {
+        sark_xfree(sv->sdram_heap, sdramImgBuf, ALLOC_LOCK);
+    }
 
+    sdramImgBuf = sark_xalloc (sv->sdram_heap, szFile, 0, ALLOC_LOCK);
+    if(sdramImgBuf == NULL) {
+        io_printf(IO_STD, "[ERR] Fail to create sdramImgBuf!\n");
+        // dangerous: terminate then!
+        rt_error (RTE_MALLOC);
+    } else {
+        ptrWrite = sdramImgBuf;
+    }
+}
 
 
 
@@ -156,6 +188,10 @@ void app_init ()
 	sdpResult.dest_port = PORT_ETH;
 	// prepare IP Tag
 	initIPTag();
-	io_printf(IO_STD, "[mSpinJPEGenc] Started\n");
+#ifdef FOR_PAPER_ICCES
+    io_printf(IO_STD, "[mSpinJPEGenc] Started in DEBUG_MODE-%d for ICCES\n", DEBUG_MODE);
+#else
+    io_printf(IO_STD, "[mSpinJPEGenc] Started in DEBUG_MODE-%d\n", DEBUG_MODE);
+#endif
 	ENABLE_TIMER ();	// Enable timer (once)
 }

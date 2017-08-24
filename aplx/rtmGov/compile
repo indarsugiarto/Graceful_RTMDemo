@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APLX=profiler.aplx
+APLX=stdGov.aplx
 BIN_DIR=../bin
 
 if [ $1=="-c" ]; then

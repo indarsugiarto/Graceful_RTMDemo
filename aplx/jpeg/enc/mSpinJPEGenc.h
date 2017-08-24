@@ -11,7 +11,9 @@
 
 /********************** MACROS/DATATYPES definitions ***********************/
 
-#define DEBUG_MODE	2
+#define FOR_PAPER_ICCES
+
+#define DEBUG_MODE	0
 
 #define DMA_FETCH_IMG_FOR_SDP_TAG	0x1
 
@@ -97,6 +99,7 @@ typedef struct jpec_enc_t_ jpec_enc_t;
 /*--- Generic, SpiNN-related variables ---*/
 uint coreID;
 uchar *sdramImgBuf;
+uchar *ptrWrite;
 uchar *dtcmImgBuf;
 uchar *jpgResult;
 int szjpgResult;
@@ -104,6 +107,8 @@ ushort wImg;
 ushort hImg;
 sdp_msg_t sdpResult;
 volatile bool dmaImgFromSDRAMdone;
+// the following special variable is used during ICCES paper experiment
+ushort numProcBlock;
 
 
 /*--- Encoder related ---*/
@@ -115,11 +120,16 @@ jpec_enc_t *e;	// encoder object
 /*--- SpiNNaker functionalities ---*/
 void encode(uint arg0, uint arg1);          // encoder main loop
 void app_init ();
+#ifndef FOR_PAPER_ICCES
 void sendJPG(uint arg0, uint arg1);			// send the result back to host-PC
+#endif
+void resizeImgBuf(uint szFile, uint portSrc);
+void sendResult(uint tmeas);
 
 /*--- Event Handlers ---*/
 void hFR (uint key, uint payload);
 void hDMA (uint tid, uint tag);
+void hSDP (uint mBox, uint port);           // only for testing
 
 /*--- Three Main Encoder functions ---*/
 jpec_enc_t *jpec_enc_new(const uchar *img, ushort w, ushort h, int q);  /* Create a JPEG encoder */

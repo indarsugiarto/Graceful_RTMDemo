@@ -15,7 +15,6 @@
 #define PLL_MODE_ORG	0	// normal/original mode
 #define PLL_MODE_EXC	1	// exclusive mode
 
-
 #define lnMemTable					93
 #define wdMemTable					3
 // memTable format: freq, MS, NS --> with default dv = 2, so that we don't have
@@ -290,8 +289,10 @@ uchar readFreq(uchar *fAHB, uchar *fRTR)
 	uchar frtr = (uchar)Rfreq;
 	uchar fcpu = (uchar)Bfreq;
 
-	*fAHB = fahb;
-	*fRTR = frtr;
+    if(fAHB!=NULL)
+        *fAHB = fahb;
+    if(fRTR!=NULL)
+        *fRTR = frtr;
 	return fcpu;
 }
 
@@ -390,7 +391,7 @@ uint readCoreFreqVal()
     return f;
 }
 
-
+/* getFreq() is a help function to read frequency in REAL type*/
 REAL getFreq(uchar sel, uchar dv)
 {
     REAL fSrc, num, denum, _dv_, val;

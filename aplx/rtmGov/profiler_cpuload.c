@@ -38,6 +38,7 @@ void print_cntr(uint null, uint nill)
   //io_printf(IO_STD,"\n\n");
 }
 
+extern INT_HANDLER hSlowTimer (void);
 void init_idle_cntr()
 {
 	for(uint i=0; i<18; i++) {

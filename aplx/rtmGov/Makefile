@@ -9,4 +9,6 @@ all: $(MKFILES)
 
 clean: $(MKFILES)
 	@for m in $(MKFILES); do ("$(MAKE)" clean -f $$m) || exit $$?; done
+	@$(RM) ../bin/stdGov.aplx
+
 

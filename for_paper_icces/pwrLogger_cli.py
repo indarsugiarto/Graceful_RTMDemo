@@ -12,6 +12,7 @@ import struct
 
 USE_PYTHON_TIMER = True
 
+LOCAL_TCP_PORT = 40001
 
 
 class cLogger(QtCore.QObject):
@@ -40,6 +41,17 @@ class cLogger(QtCore.QObject):
             self.tcp.readyRead.connect(self.readData2)
         self.tcp.error.connect(self.tcpError)
 
+        # and for the killer
+        self.killer = QtNetwork.QTcpServer(self)
+        if self.killer.listen(QtNetwork.QHostAddress.LocalHost, LOCAL_TCP_PORT) is False:
+            print "[WARNING] Cannot open port-{}".format(LOCAL_TCP_PORT)
+        else:
+            print "[INFO] my closing port is {}".format(LOCAL_TCP_PORT)
+            self.killer.newConnection.connect(self.killMe)
+
+    def killMe(self):
+        self.isRunning = False
+
     def start(self):
         self.isStarted = True
 
@@ -57,8 +69,8 @@ class cLogger(QtCore.QObject):
         self.logFile = open(self.fname, "w")
         print "[INFO] Connecting to Raspberry Pi..."
         self.tcp.connectToHost(self.ip, self.port)
-
-        while True:
+        self.isRunning = True
+        while self.isRunning:
             try:
                 QtCore.QCoreApplication.processEvents()
             except KeyboardInterrupt:
@@ -92,6 +104,8 @@ class cLogger(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def readData0(self):
+        if self.isRunning is False:
+            return
         """
         # The following will produce TypeError: object of type 'NoneType' has no len()
         instr = QtCore.QDataStream(self.tcp)
@@ -127,7 +141,8 @@ class cLogger(QtCore.QObject):
         d1,d2,d3,d4,d5,d6,d7,d8,ts,tu = struct.unpack(self.fmt, ba)
         d = '{},{},{},{},{},{},{},{},{}.{}\n'.format(d1,d2,d3,d4,d5,d6,d7,d8,ts,tu)
         if USE_PYTHON_TIMER:
-            d = '{},{},{},{},{},{},{},{},{}\n'.format(d1,d2,d3,d4,d5,d6,d7,d8,time.time())
+            ts = '%lf'%time.time()
+            d = '{},{},{},{},{},{},{},{},{}\n'.format(d1,d2,d3,d4,d5,d6,d7,d8,ts)
         else:
             d = '{},{},{},{},{},{},{},{},{}.{}\n'.format(d1,d2,d3,d4,d5,d6,d7,d8,ts,tu)
         self.logFile.write(d)
@@ -138,6 +153,8 @@ class cLogger(QtCore.QObject):
         """
         For continuous mode.
         """
+        if self.isRunning is False:
+            return
 
         # read all as bytearray
         while self.tcp.bytesAvailable() >= self.szData:

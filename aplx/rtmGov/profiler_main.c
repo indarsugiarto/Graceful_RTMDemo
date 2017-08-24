@@ -19,6 +19,9 @@ void init_app()
   // test:
   // showPLLinfo(sv->p2p_addr, 0);
 
+  // initialize governor
+  init_governor();
+
   // others:
   streaming = FALSE;    // by default we silent
   // put version to vcpu->user0 to be detected by host GUI

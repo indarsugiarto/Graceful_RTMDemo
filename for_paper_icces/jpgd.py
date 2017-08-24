@@ -31,7 +31,7 @@ SDP_SEND_RESULT_PORT = 30000
 
 
 DELAY_IS_ON = True
-DELAY_SEC = 0.01
+DELAY_SEC = 0.0001
 
 
 from PyQt4 import Qt, QtCore, QtNetwork

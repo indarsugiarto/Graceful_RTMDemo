@@ -118,4 +118,10 @@ typedef struct file_descriptor {
 //#define SDP_TX_TIMEOUT          500             // can go save at almost 5Mbps
 //#define SDP_TX_TIMEOUT          10000000      // for debugging
 
+
+/*----------- DMA functionality -----------*/
+#define DMA_JPG_IMG_BUF_WRITE	1
+#define DMA_RAW_IMG_BUF_WRITE   2
+
+
 #endif

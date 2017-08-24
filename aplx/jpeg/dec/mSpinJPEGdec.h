@@ -8,15 +8,11 @@
 /********************** CONST/MACRO definitions ***********************/
 
 
-/*----------- DMA functionality -----------*/
-#define DMA_JPG_IMG_BUF_WRITE	1
-#define DMA_RAW_IMG_BUF_WRITE   2
-
 /*----------- Pre-defined user events -----------*/
 #define UE_START_DECODER    1
 
 /*----------- Debugging functionality -----------*/
-#define DEBUG_MODE	3
+#define DEBUG_MODE	0
 
 #define FOR_PAPER_ICCES
 

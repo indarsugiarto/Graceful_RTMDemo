@@ -60,7 +60,6 @@ void init_Handlers()
 
 /* collectData is a USER_EVENT triggerd by hSlowTimer in profiler_cpuload.c
  * */
-uchar virt_cpu_idle_cntr[18];
 uchar virt_cpu;
 void collectData(uint None, uint Unused)
 {
@@ -72,7 +71,7 @@ void collectData(uint None, uint Unused)
 */
 	// convert from phys to virt cpu
 	for(uint i=0; i<18; i++) {
-		virt_cpu = sv->p2v_map[i];	// the the virtual cpu id
+        virt_cpu = sv->p2v_map[i];	// the virtual cpu id
 		virt_cpu_idle_cntr[virt_cpu] = stored_cpu_idle_cntr[i];
 	}
 	sark_mem_cpy((void *)&reportMsg.cmd_rc, (void *)&myProfile, sizeof(pro_info_t));
@@ -150,6 +149,12 @@ void hSDP(uint mailbox, uint port)
             changeFreq(comp, f);
             break;
 			}
+        case HOST_SET_GOV_MODE:
+            change_governor((gov_t)msg->seq, msg->arg1);
+            break;
+        case HOST_REQ_GOV_STATUS:
+            spin1_schedule_callback(get_governor_status,0,0,SCHEDULED_PRIORITY_VAL);
+            break;
 		case HOST_TELL_STOP:
 			spin1_exit(0);
 		}

@@ -86,10 +86,10 @@
 */
 
 /*------------------- SDP-related parameters ---------------------*/
-#define DEF_REPORT_TAG              3
-#define DEF_REPORT_PORT				40003
-#define DEF_ERR_INFO_TAG			4
-#define DEF_ERR_INFO_PORT			40004
+#define DEF_REPORT_TAG              5
+#define DEF_REPORT_PORT				40005
+#define DEF_ERR_INFO_TAG			6
+#define DEF_ERR_INFO_PORT			40006
 #define DEF_INTERNAL_SDP_PORT		1
 #define DEF_HOST_SDP_PORT           7		// port-7 has a special purpose, usually related with ETH
 #define DEF_TIMEOUT					10		// as recommended
@@ -101,12 +101,17 @@
 #define HOST_SET_FREQ_VALUE			4		// Note: HOST_SET_FREQ_VALUE assumes that CPUs use PLL1,
 											// if this is not the case, then use HOST_SET_CHANGE_PLL
 #define HOST_REQ_PROFILER_STREAM	5		// host send this to a particular profiler to start streaming
-#define HOST_TELL_STOP				6
+#define HOST_SET_GOV_MODE           6
+#define HOST_REQ_GOV_STATUS         7
+#define HOST_TELL_STOP				255
 
 
 /*--------------------- Reporting Data Structure -------------------------*/
 /* The idea is: since this version uses slow recording, then each profiler
  * can report directly to host-PC via SDP.
+ *
+ * myProfile will be put in the SCP part of SDP, whereas the
+ * virt_cpu_idle_cntr will be copied into the data segment of the SDP.
 /*------------------------------------------------------------------------*/
 typedef struct pro_info {
     ushort v;           // profiler version, in cmd_rc
@@ -125,7 +130,12 @@ pro_info_t myProfile;
 ushort my_pID;
 
 /*====================== PLL-related Functions =======================*/
-
+#define MAX_CPU_FREQ    255
+#define MIN_CPU_FREQ    100
+#define MAX_AHB_FREQ    173
+#define MIN_AHB_FREQ    130
+#define MAX_RTR_FREQ    MAX_AHB_FREQ
+#define MIN_RTR_FREQ    MIN_AHB_FREQ
 enum PLL_COMP_e {PLL_CPU, PLL_AHB, PLL_RTR};
 typedef enum PLL_COMP_e PLL_PART;
 
@@ -139,6 +149,7 @@ uchar readFreq(uchar *fAHB, uchar *fRTR);		// read freqs of three components
 /*====================== CPUidle-related Functions =======================*/
 uchar running_cpu_idle_cntr[18];
 uchar stored_cpu_idle_cntr[18];
+uchar virt_cpu_idle_cntr[18];
 uint idle_cntr_cntr; //master counter that count up to 100
 void init_idle_cntr();
 void startProfiling(uint null, uint nill);
@@ -154,6 +165,24 @@ uint readTemp();                            // in addition, sensor-2 will be ret
 void init_Router();                         // sub-profilers report to the root profiler
 void init_Handlers();
 
+/*======================== Governors ========================*/
+typedef enum gov_e
+{
+  GOV_USER,
+  GOV_ONDEMAND,
+  GOV_PERFORMANCE,
+  GOV_POWERSAVE,
+  GOV_CONSERVATIVE,
+  GOV_PMC,
+  GOV_QLEARNING
+} gov_t;
+
+static gov_t current_gov = GOV_USER;
+uint freqUserDef;
+void init_governor();
+void change_governor(gov_t newGov, uint user_def_freq);
+void get_governor_status(uint arg1, uint arg2);
+void governor(uint arg1, uint arg2); // callback for main governor thread
 
 
 /*======================== Misc. Functions ===========================*/

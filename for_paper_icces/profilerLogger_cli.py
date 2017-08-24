@@ -10,8 +10,6 @@ import time
 import os
 import struct
 
-USE_PYTHON_TIMER = True
-LOCAL_TCP_PORT = 40000
 
 DEF_SPINN_IP = '192.168.240.1'
 SPINN_CHIP_X = 0
@@ -19,22 +17,15 @@ SPINN_CHIP_Y = 0
 SPINN_PORT = 17893
 
 
-#/*--- For JPEG file ---*/
-SDP_PORT_JPEG_DATA = 1
-SDP_PORT_JPEG_INFO     = 2
-#/*--- For Raw RGB file ---*/
-SDP_PORT_RAW_DATA    = 3
-SDP_PORT_RAW_INFO   = 4
-#/*--- For both ---*/
-SDP_CMD_INIT_SIZE    = 1
-SDP_CMD_CLOSE_IMAGE    = 2
-SDP_CMD_REPORT_TMEAS  =  3
-
-SDP_RECV_CORE_ID = 2    
+PROFILER_CORE_ID = 1    
 
 SDP_SEND_RESULT_TAG = 1
-SDP_SEND_RESULT_PORT = 30000
 DEF_HOST_SDP_PORT = 7        # port-7 has a special purpose, usually related with ETH
+
+DEF_REPORT_TAG = 5
+DEF_REPORT_PORT	= 40005
+DEF_ERR_INFO_TAG = 6
+DEF_ERR_INFO_PORT = 40006
 
 HOST_REQ_PLL_INFO = 1
 HOST_REQ_INIT_PLL = 2        # host request special PLL configuration
@@ -49,6 +40,7 @@ HOST_TELL_STOP = 255
 DELAY_IS_ON = True
 DELAY_SEC = 0.01
 
+LOCAL_TCP_PORT = 40000
 
 class cLogger(QtCore.QObject):
     def __init__(self, logName=None, parent=None):
@@ -78,8 +70,8 @@ class cLogger(QtCore.QObject):
 
     def setupUDP(self):
         self.sdpRecv = QtNetwork.QUdpSocket(self)
-        print "[INFO] Trying to open UDP port-{}...".format(SDP_SEND_RESULT_PORT),
-        ok = self.sdpRecv.bind(SDP_SEND_RESULT_PORT)
+        print "[INFO] Trying to open UDP port-{}...".format(DEF_REPORT_PORT),
+        ok = self.sdpRecv.bind(DEF_REPORT_PORT)
         if ok:
             print "done!"
             self.sdpRecv.readyRead.connect(self.readSDP)
@@ -96,6 +88,7 @@ class cLogger(QtCore.QObject):
         if self.tcp.listen(QtNetwork.QHostAddress.LocalHost, LOCAL_TCP_PORT) is False:
             print "[WARNING] Cannot open port-{}".format(LOCAL_TCP_PORT)
         else:
+            print "[INFO] my closing port is {}".format(LOCAL_TCP_PORT)
             self.tcp.newConnection.connect(self.killMe)
 
     @QtCore.pyqtSlot()
@@ -118,29 +111,29 @@ class cLogger(QtCore.QObject):
         del ba[0:10]
         if len(ba) == self.szData:
             c = [0 for _ in range(18)]
-            v, pID, fCPU, fRTR, fAHB, nActive, temp1, temp3, mem, c[0], c[1], c[2], c[3], c[4],
-            c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15], c[16],
+            v, pID, fCPU, fRTR, fAHB, nActive, temp1, temp3, mem, c[0], c[1], c[2], c[3], c[4],\
+            c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15], c[16],\
             c[17] = struct.unpack(self.fmt, ba)
         
             s = '%d,%d,%d,%d,%d,%d,%d,%d,%d'%(v,pID,fCPU,fRTR,fAHB,nActive,temp1,temp3,mem)
             for i in range(18):
                 s += ',%d'%c[i]
 
-            s += '{}'.format(time.time())
+            s += ',%lf\n'%(time.time())
 
             self.logFile.write(s)
 
     def prepareLogFile(self):
         #prepare to save data
+        LOG_DIR = "./experiments/"
         if self.logName is None:
-            LOG_DIR = "./experiments/"
             cmd = "mkdir -p {}".format(LOG_DIR)
             os.system(cmd)
             self.fname = LOG_DIR + 'profiler_' + time.strftime("%b_%d_%Y-%H.%M.%S", time.gmtime()) + ".log"
         else:
             if self.logName.find(".log") == -1:
                 self.logName += ".log"
-            self.fname = self.logName
+            self.fname = LOG_DIR + self.logName
         print "[INFO] Preparing log-file: {}".format(self.fname)
         self.logFile = open(self.fname, "w")
 
@@ -172,14 +165,14 @@ class cLogger(QtCore.QObject):
             dp = DEF_HOST_SDP_PORT
             cmd = HOST_REQ_PROFILER_STREAM
             seq = 1
-            self.sendSDP(7,0,dp,1,SPINN_CHIP_X,SPINN_CHIP_Y,cmd,seq,0,0,0,None)
+            self.sendSDP(7,0,dp,PROFILER_CORE_ID,SPINN_CHIP_X,SPINN_CHIP_Y,cmd,seq,0,0,0,None)
         else:
             print "[INFO] Disconnecting from SpiNNaker..."
             #send streaming request...
             dp = DEF_HOST_SDP_PORT
             cmd = HOST_REQ_PROFILER_STREAM
             seq = 0
-            self.sendSDP(7,0,dp,1,SPINN_CHIP_X,SPINN_CHIP_Y,cmd,seq,0,0,0,None)
+            self.sendSDP(7,0,dp,PROFILER_CORE_ID,SPINN_CHIP_X,SPINN_CHIP_Y,cmd,seq,0,0,0,None)
 
     def start(self):
         if self.isUdpReady is False:
@@ -190,7 +183,7 @@ class cLogger(QtCore.QObject):
 
         self.isRunning = True # will be set False by 'killing' on port LOCAL_TCP_PORT
 
-        while isRunning:
+        while self.isRunning:
             try:
                 QtCore.QCoreApplication.processEvents()
             except KeyboardInterrupt:
