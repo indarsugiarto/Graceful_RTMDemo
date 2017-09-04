@@ -69,5 +69,6 @@ dkms.conf
 *.pyc
 *.pro.user*
 *.aplx
+*~
 #run*
 
