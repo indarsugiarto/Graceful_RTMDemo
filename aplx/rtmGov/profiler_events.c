@@ -150,6 +150,10 @@ void hSDP(uint mailbox, uint port)
             break;
 			}
         case HOST_SET_GOV_MODE:
+            /* change_governor() is called via hSDP
+             * for GOV_USER, user_param will set the desired user_def_freq
+             * for GOV_QLEARNING, user_param determines if Q-learning should be reset or not
+             * */
             change_governor((gov_t)msg->seq, msg->arg1);
             break;
         case HOST_REQ_GOV_STATUS:

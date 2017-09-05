@@ -1,0 +1,13 @@
+This is the GUI program for the SpiNNVid - Simple Image/Video Processing on SpiNNaker.
+
+To use it, you need:
+- Qt (4.8 or higher)
+- FFMpeg or libav
+
+To compile, simply run the "compile" script. The result is in the SpiNNvidStreamer/build folder.
+
+
+NOTE on previous version:
+-------------------------
+This program is based on the previous version at: ~/Projects/SpiNN/graceful/pC-VidPro/gui
+

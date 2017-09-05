@@ -10,6 +10,7 @@ static void gov_conservative();
 static void gov_pmc();
 static void gov_qlearning();
 
+
 void init_governor()
 {
     freqUserDef = readFreq(NULL, NULL); // initially, use current frequency
@@ -17,11 +18,20 @@ void init_governor()
     spin1_schedule_callback(governor, 0, 0, IDLE_PRIORITY_VAL);
 }
 
-void change_governor(gov_t newGov, uint user_def_freq)
+
+/* change_governor() is called via hSDP
+ * for GOV_USER, user_param will set the desired user_def_freq
+ * for GOV_QLEARNING, user_param determines if Q-learning should be reset or not
+ *                    when reset, the Q will restart the learning process
+ * */
+void change_governor(gov_t newGov, uint user_param)
 {
-    io_printf(IO_BUF, "[INFO] Changing to mode-%d with user_def_freq-%d\n", newGov, user_def_freq);
+#if(DEBUG_LEVEL>0)
+    io_printf(IO_BUF, "[INFO] Changing to mode-%d with user_param-%d\n", newGov, user_param);
+#endif
     current_gov = newGov; // will take action in the next schedule
-    freqUserDef = user_def_freq;
+    freqUserDef = user_param;
+    qIsInitialized = user_param; // In C true is any value != 0 , and false == 0
 }
 
 void get_governor_status(uint arg1, uint arg2)
@@ -136,7 +146,16 @@ void gov_pmc()
     if(f!=y) changeFreq(PLL_CPU, y);
 }
 
+// gov_qlearning functionalities are written in profiler_q.c
+extern void initQ();
+extern void runQ();
+
 void gov_qlearning()
 {
-
+    // qIsInitialized is determined in change_governor()
+    if(qIsInitialized==FALSE) {
+        initQ(); // and set in learning mode
+    } else {
+        runQ();
+    }
 }

@@ -130,6 +130,7 @@ pro_info_t myProfile;
 ushort my_pID;
 
 /*====================== PLL-related Functions =======================*/
+#define N_AVAIL_FREQ    93
 #define MAX_CPU_FREQ    255
 #define MIN_CPU_FREQ    100
 #define MAX_AHB_FREQ    173
@@ -145,6 +146,108 @@ void showPLLinfo(uint output, uint arg1);
 void revertPLL();                           // return back PLL configuration
 uchar readFreq(uchar *fAHB, uchar *fRTR);		// read freqs of three components
 
+// Let's put frequency list here so that it can be used by the Q-gov as well
+//#define lnMemTable					93
+#define lnMemTable                  N_AVAIL_FREQ // make it consistent with Q-gov
+#define wdMemTable                  3
+// memTable format: freq, MS, NS --> with default dv = 2, so that we don't have
+// to modify r24
+static const uchar memTable[lnMemTable][wdMemTable] = {
+{10,1,2},
+{11,5,11},
+{12,5,12},
+{13,5,13},
+{14,5,14},
+{15,1,3},
+{16,5,16},
+{17,5,17},
+{18,5,18},
+{19,5,19},
+{20,1,4},
+{21,5,21},
+{22,5,22},
+{23,5,23},
+{24,5,24},
+{25,1,5},
+{26,5,26},
+{27,5,27},
+{28,5,28},
+{29,5,29},
+{30,1,6},
+{31,5,31},
+{32,5,32},
+{33,5,33},
+{34,5,34},
+{35,1,7},
+{36,5,36},
+{37,5,37},
+{38,5,38},
+{39,5,39},
+{40,1,8},
+{41,5,41},
+{42,5,42},
+{43,5,43},
+{44,5,44},
+{45,1,9},
+{46,5,46},
+{47,5,47},
+{48,5,48},
+{49,5,49},
+{50,1,10},
+{51,5,51},
+{52,5,52},
+{53,5,53},
+{54,5,54},
+{55,1,11},
+{56,5,56},
+{57,5,57},
+{58,5,58},
+{59,5,59},
+{60,1,12},
+{61,5,61},
+{62,5,62},
+{63,5,63},
+{65,1,13},
+{70,1,14},
+{75,1,15},
+{80,1,16},
+{85,1,17},
+{90,1,18},
+{95,1,19},
+{100,1,20},
+{105,1,21},
+{110,1,22},
+{115,1,23},
+{120,1,24},
+{125,1,25},
+{130,1,26},
+{135,1,27},
+{140,1,28},
+{145,1,29},
+{150,1,30},
+{155,1,31},
+{160,1,32},
+{165,1,33},
+{170,1,34},
+{175,1,35},
+{180,1,36},
+{185,1,37},
+{190,1,38},
+{195,1,39},
+{200,1,40},
+{205,1,41},
+{210,1,42},
+{215,1,43},
+{220,1,44},
+{225,1,45},
+{230,1,46},
+{235,1,47},
+{240,1,48},
+{245,1,49},
+{250,1,50},
+{255,1,51},
+};
+
 
 /*====================== CPUidle-related Functions =======================*/
 uchar running_cpu_idle_cntr[18];
@@ -159,13 +262,20 @@ void stopProfiling(uint null, uint nill);
 /*==================== Temperature-related Functions =====================*/
 uint tempVal[3];							// there are 3 sensors in each chip
 uint readTemp();                            // in addition, sensor-2 will be returned
-
+REAL getRealTemp(uint tVal);                // use sensor-2 only!
 
 /*======================= Event-related Functions =====================*/
 void init_Router();                         // sub-profilers report to the root profiler
 void init_Handlers();
 
 /*======================== Governors ========================*/
+// how CPUperf will be calculated in Q-gov?
+// - if many (all) cores are used, then use METHOD_AVG
+// - if single (or very few) cores, such as in singe-core JPEG aplx, then use METHOD_MAX
+#define METHOD_AVG              0
+#define METHOD_MAX              1
+#define CPU_PERF_MEAS_METHOD    METHOD_MAX
+
 typedef enum gov_e
 {
   GOV_USER,
@@ -179,8 +289,9 @@ typedef enum gov_e
 
 static gov_t current_gov = GOV_USER;
 uint freqUserDef;
+static volatile uchar qIsInitialized = FALSE;
 void init_governor();
-void change_governor(gov_t newGov, uint user_def_freq);
+void change_governor(gov_t newGov, uint user_param); // see profiler_gov.c for the meaning of those arguments
 void get_governor_status(uint arg1, uint arg2);
 void governor(uint arg1, uint arg2); // callback for main governor thread
 

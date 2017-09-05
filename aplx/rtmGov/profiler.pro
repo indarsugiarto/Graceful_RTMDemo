@@ -11,7 +11,8 @@ SOURCES += profiler_main.c \
 	   profiler_util.c \
     profiler_gov.c \
     profiler_main.c \
-    profiler_cpuload_isr.c
+    profiler_cpuload_isr.c \
+    profiler_q.c
 
 HEADERS += profiler.h \
 
